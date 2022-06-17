@@ -1,0 +1,57 @@
+
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+service CMService {
+
+    rpc CMessageSend(CMessageSendRequest) returns (CMessageSendResponse);
+    rpc CMessageListen(CMessageListenRequest) returns (stream CMessageUpdate);
+
+    rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
+    rpc Watch(HealthCheckRequest) returns (stream HealthCheckResponse);
+}
+
+message CMessageUpdate {
+    CMessage messages = 1;
+}
+
+message CMessageSendResponse {
+    enum SendStatus {
+        SUCCESS = 0;
+        FAILURE = 1;
+    }
+    SendStatus status = 1;
+}
+
+message CMessageListenRequest {
+    CMessageFilter filter = 1;
+}
+
+message CMessageFilter {
+    string source = 1;
+}
+
+message CMessageSendRequest {
+    CMessage inner = 1;
+}
+
+message CMessage {
+    string content = 1;
+    string source = 2;
+    google.protobuf.Timestamp timestamp = 3;
+}
+
+message HealthCheckRequest {
+    string service = 1;
+};
+
+message HealthCheckResponse {
+    enum ServingStatus {
+        UNKNOWN = 0;
+        SERVING = 1;
+        NOT_SERVING = 2;
+        SERVICE_UNKNOWN = 3;
+    }
+    ServingStatus status = 1;
+}
