@@ -1,4 +1,5 @@
 [workspace]
 members = [
 	"pine5-gateway",
+	"pine5-gateway-core",
 ]
