@@ -1,5 +1,6 @@
 use hyper::Request;
 use tower::Service;
+/*
 
 enum StatusRequest<S, P>
 where
@@ -15,3 +16,4 @@ pub struct ServiceStatus;
 impl<S: Service, P: FnMut(&S) -> bool> Service<Request<StatusRequest<>>> {
 
 }
+*/
