@@ -7,6 +7,7 @@ use crate::model::{RawPayload, JsonPayload};
 
 /// Maintain internal context of a `Plugin`.
 /// This is passed to plugin in each handling function call.
+#[derive(Debug, Clone, Default)]
 pub struct PluginContext {}
 
 /// Plugin interface to be implemented by the plugin author.
@@ -82,25 +83,25 @@ impl PluginManager {
 
         let plugin = Box::from_raw(boxed_raw);
         debug!("Loaded plugin: {}", plugin.name());
-        plugin.on_plugin_road();
-        self.plugins.push(plugin);
+        plugin.on_plugin_load();
+        self.plugins.push((plugin, PluginContext::default()));
 
         Ok(())
     }
 
     /// Call raw payload hooks for each of the loaded plugins.
-    pub fn raw_payload_recv(&self, payload: RawPayload) {
+    pub fn raw_payload_recv(&mut self, payload: RawPayload) {
         debug!("Firing raw_payload_recv hooks");
-        for plugin in &mut self.plugins {
+        for (plugin, ctx) in &mut self.plugins {
             trace!("Firing raw_payload for {:?}", plugin.name());
             plugin.raw_payload_recv(ctx, &payload);
         }
     }
 
     /// Call json payload hooks for each of the loaded plugins.
-    pub fn json_payload_recv(&self, payload: JsonPayload) {
+    pub fn json_payload_recv(&mut self, payload: JsonPayload) {
         debug!("Firing json_payload_recv hooks");
-        for plugin in &mut self.plugins {
+        for (plugin, ctx) in &mut self.plugins {
             trace!("Firing json_payload for {:?}", plugin.name());
             plugin.json_payload_recv(ctx, &payload);
         }
