@@ -1,4 +1,4 @@
-use std::{any::Any, ffi::OsStr};
+use std::{any::Any, ffi::OsStr, fmt::{Formatter, self}};
 
 use libloading::{Library, Symbol};
 use tracing::{debug, log::trace};
@@ -35,6 +35,7 @@ pub trait Plugin: Any + Send + Sync {
     fn json_payload_recv(&self, _ctx: &mut PluginContext, _payload: &JsonPayload) {}
 }
 
+/// Declare a plugin type and its constructor.
 macro_rules! declare_plugin {
     ($plugin_type:ty, $constructor:path) => {
         #[no_mangle]
@@ -90,7 +91,7 @@ impl PluginManager {
     }
 
     /// Call raw payload hooks for each of the loaded plugins.
-    pub fn raw_payload_recv(&mut self, payload: RawPayload) {
+    pub fn raw_payload_recv(&mut self, payload: &mut RawPayload) {
         debug!("Firing raw_payload_recv hooks");
         for (plugin, ctx) in &mut self.plugins {
             trace!("Firing raw_payload for {:?}", plugin.name());
@@ -99,11 +100,44 @@ impl PluginManager {
     }
 
     /// Call json payload hooks for each of the loaded plugins.
-    pub fn json_payload_recv(&mut self, payload: JsonPayload) {
+    pub fn json_payload_recv(&mut self, payload: &mut JsonPayload) {
         debug!("Firing json_payload_recv hooks");
         for (plugin, ctx) in &mut self.plugins {
             trace!("Firing json_payload for {:?}", plugin.name());
             plugin.json_payload_recv(ctx, &payload);
         }
+    }
+
+    /// Unload all plugins and loaded plugin libraries.
+    /// This triggers their `on_plugin_unload()` for necessary cleanup.
+    pub fn unload(&mut self) {
+        debug!("Unloading plugins");
+
+        for (plugin, ctx) in self.plugins.drain(..) {
+            trace!("Firing on_plugin_unload for {:?}", plugin.name());
+            plugin.on_plugin_unload();
+        }
+
+        for lib in self.loaded_libraries.drain(..) {
+            drop(lib);
+        }
+    }
+}
+
+impl Drop for PluginManager {
+    fn drop(&mut self) {
+        if !self.plugins.is_empty() || !self.loaded_libraries.is_empty() {
+            self.unload();
+        }
+    }
+}
+
+impl Debug for PluginManager {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        let plugins: Vec<_> = self.plugins.iter().map(|(plugin, ctx)| plugin.name()).collect();
+
+        f.debug_struct("PluginManager")
+            .field("plugins", &plugins)
+            .finish()
     }
 }
