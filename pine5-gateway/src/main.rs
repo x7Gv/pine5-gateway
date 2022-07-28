@@ -1,6 +1,7 @@
 mod web_api;
 mod service;
 mod plugins;
+mod model;
 
 use hyper::Server;
 

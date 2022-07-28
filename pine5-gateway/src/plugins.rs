@@ -1,16 +1,37 @@
 use std::{any::Any, ffi::OsStr};
 
 use libloading::{Library, Symbol};
-use tracing::debug;
+use tracing::{debug, log::trace};
 
+use crate::model::{RawPayload, JsonPayload};
+
+/// Maintain internal context of a `Plugin`.
+/// This is passed to plugin in each handling function call.
+pub struct PluginContext {}
+
+/// Plugin interface to be implemented by the plugin author.
 pub trait Plugin: Any + Send + Sync {
+
+    /// Get identifier of the `Plugin` used to distinguish different plugins
+    /// from each other.
+    fn identifier(&self) -> &'static str;
+
+    /// Get name describing the `Plugin`.
     fn name(&self) -> &'static str;
 
-    fn on_plugin_road(&self) {}
+    /// A callback fired immediately after the plugin is loaded.
+    /// This is usually used for initializing.
+    fn on_plugin_load(&self) {}
 
+    /// A callback fired immediately before the plugin is unloaded.
+    /// This is most fit to be used for doing any cleanup.
     fn on_plugin_unload(&self) {}
 
-    // fn on_payload_recv(&self) {}
+    /// Handle payload receiving. The outcome of the handling should be mutated to the passed in `PluginContext`.
+    fn raw_payload_recv(&self, _ctx: &mut PluginContext, _payload: &RawPayload) {}
+
+    /// Handle payload receiving. The outcome of the handling should be mutated to the passed in `PluginContext`.
+    fn json_payload_recv(&self, _ctx: &mut PluginContext, _payload: &JsonPayload) {}
 }
 
 macro_rules! declare_plugin {
@@ -25,8 +46,11 @@ macro_rules! declare_plugin {
     };
 }
 
+/// Manage plugins and store their internal state.
 pub struct PluginManager {
-    plugins: Vec<Box<dyn Plugin>>,
+    /// Store each loaded library trait object as well as designated context object.
+    plugins: Vec<(Box<dyn Plugin>, PluginContext)>,
+    /// Let every library outlive its corresponding plugin.
     loaded_libraries: Vec<Library>,
 }
 
@@ -38,6 +62,11 @@ impl PluginManager {
         }
     }
 
+    /// Dynamically load a plugin from given file path.
+    ///
+    /// # Safety
+    /// Each plugin to be loaded must contain a `_plugin_create` symbol
+    /// in order to load. This symbol is exclusively defined in the plugin std library.
     pub unsafe fn load_path<P: AsRef<OsStr>>(&mut self, filename: P) -> anyhow::Result<()> {
         type PluginCreate = unsafe fn() -> *mut dyn Plugin;
 
@@ -57,5 +86,23 @@ impl PluginManager {
         self.plugins.push(plugin);
 
         Ok(())
+    }
+
+    /// Call raw payload hooks for each of the loaded plugins.
+    pub fn raw_payload_recv(&self, payload: RawPayload) {
+        debug!("Firing raw_payload_recv hooks");
+        for plugin in &mut self.plugins {
+            trace!("Firing raw_payload for {:?}", plugin.name());
+            plugin.raw_payload_recv(ctx, &payload);
+        }
+    }
+
+    /// Call json payload hooks for each of the loaded plugins.
+    pub fn json_payload_recv(&self, payload: JsonPayload) {
+        debug!("Firing json_payload_recv hooks");
+        for plugin in &mut self.plugins {
+            trace!("Firing json_payload for {:?}", plugin.name());
+            plugin.json_payload_recv(ctx, &payload);
+        }
     }
 }
