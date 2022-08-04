@@ -1,0 +1,19 @@
+record base64-packet {
+    data: list<u8>,
+}
+
+record json-packet {
+    json: string,
+}
+
+enum decoding-error {
+    invalid-packet,
+}
+
+identifier: func() -> string
+name: func() -> string
+
+on-plugin-load: func()
+on-plugin-unload: func()
+
+decode: func(source: base64-packet) -> expected<json-packet, decoding-error>

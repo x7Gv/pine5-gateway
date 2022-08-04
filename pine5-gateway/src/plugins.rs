@@ -1,4 +1,4 @@
-use std::{any::Any, ffi::OsStr, fmt::{Formatter, self}};
+use std::{any::Any, ffi::OsStr, fmt::{Formatter, self, Debug}};
 
 use libloading::{Library, Symbol};
 use tracing::{debug, log::trace};

@@ -17,3 +17,7 @@ libloading = "0.7.3"
 anyhow = "1.0.58"
 tracing = "0.1.35"
 tracing-subscriber = "0.3.15"
+# wasm
+wit-bindgen-wasmtime = { git = "https://github.com/bytecodealliance/wit-bindgen" }
+wasmtime = "0.38"
+wasmtime-wasi = "0.38"
