@@ -1,9 +1,13 @@
-use std::{any::Any, ffi::OsStr, fmt::{Formatter, self, Debug}};
+use std::{
+    any::Any,
+    ffi::OsStr,
+    fmt::{self, Debug, Formatter},
+};
 
 use libloading::{Library, Symbol};
 use tracing::{debug, log::trace};
 
-use crate::model::{RawPayload, JsonPayload};
+use crate::model::{JsonPayload, RawPayload};
 
 /// Maintain internal context of a `Plugin`.
 /// This is passed to plugin in each handling function call.
@@ -12,7 +16,6 @@ pub struct PluginContext {}
 
 /// Plugin interface to be implemented by the plugin author.
 pub trait Plugin: Any + Send + Sync {
-
     /// Get identifier of the `Plugin` used to distinguish different plugins
     /// from each other.
     fn identifier(&self) -> &'static str;
@@ -134,7 +137,11 @@ impl Drop for PluginManager {
 
 impl Debug for PluginManager {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        let plugins: Vec<_> = self.plugins.iter().map(|(plugin, ctx)| plugin.name()).collect();
+        let plugins: Vec<_> = self
+            .plugins
+            .iter()
+            .map(|(plugin, ctx)| plugin.name())
+            .collect();
 
         f.debug_struct("PluginManager")
             .field("plugins", &plugins)

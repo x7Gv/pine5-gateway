@@ -1,10 +1,12 @@
-mod web_api;
-mod service;
-mod plugins;
 mod model;
 mod plugin;
+mod plugins;
+mod service;
+mod web_api;
 
 use hyper::Server;
+
+use crate::plugin::decoder::decoder_plugin::Base64Packet;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -17,7 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     dpm.load_path("aabb")?;
 
-    dpm.decode()?;
+    dpm.decode(Base64Packet {data: b"abc"})?;
 
     println!("Listening on http://{}", addr);
 

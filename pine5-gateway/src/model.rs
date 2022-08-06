@@ -1,4 +1,3 @@
-
 #[derive(Debug, Clone)]
 pub struct RawPayload {
     pub bytes: Vec<u8>,
