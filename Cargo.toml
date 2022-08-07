@@ -1,6 +1,8 @@
 [workspace]
 members = [
-	"pine5-gateway",
+	"server",
+	"linker",
+	"data",
 	"plugins/handler",
 	"plugins/decoder",
 ]

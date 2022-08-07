@@ -1371,7 +1371,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "pine5-gateway"
+name = "pine5-gateway-data"
+version = "0.1.0"
+
+[[package]]
+name = "pine5-gateway-linker"
+version = "0.1.0"
+
+[[package]]
+name = "pine5-gateway-server"
 version = "0.1.0"
 dependencies = [
  "anyhow",
